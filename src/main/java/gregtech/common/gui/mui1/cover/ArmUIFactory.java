@@ -2,6 +2,13 @@ package gregtech.common.gui.mui1.cover;
 
 import java.text.FieldPosition;
 
+import com.cleanroommc.modularui.utils.item.IItemHandler;
+import com.cleanroommc.modularui.utils.item.IItemHandlerModifiable;
+import com.cleanroommc.modularui.utils.item.ItemStackHandler;
+import com.cleanroommc.modularui.widgets.ItemSlot;
+import com.cleanroommc.modularui.widgets.slot.ModularSlot;
+import com.gtnewhorizons.modularui.common.widget.SlotWidget;
+import gregtech.common.gui.modularui.widget.ItemWatcherSlotWidget;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.tileentity.TileEntity;
 
@@ -26,6 +33,8 @@ public class ArmUIFactory extends CoverLegacyDataUIFactory {
     private static final int spaceY = 18;
 
     private int maxSlot;
+
+    private final IItemHandlerModifiable inventory = new ItemStackHandler(1);
 
     /**
      * Display the text "Any" instead of a number when the slot is set to -1.
@@ -128,7 +137,8 @@ public class ArmUIFactory extends CoverLegacyDataUIFactory {
                         .setPos(spaceX * 0, spaceY * 2 + 2)
                         .setSize(spaceX * 2 + 5, 12))
                 .setPos(startX, startY))
-            .widget(
+            .widget(new SlotWidget(inventory, 0))
+                .widget(
                 new TextWidget()
                     .setStringSupplier(
                         getCoverString(

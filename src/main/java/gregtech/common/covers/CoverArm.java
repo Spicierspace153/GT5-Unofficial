@@ -1,7 +1,11 @@
 package gregtech.common.covers;
 
+import it.unimi.dsi.fastutil.ints.IntList;
+import minetweaker.api.item.IItemStack;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.IInventory;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraftforge.common.util.ForgeDirection;
 import net.minecraftforge.fluids.Fluid;
@@ -15,6 +19,9 @@ import gregtech.api.interfaces.tileentity.ICoverable;
 import gregtech.api.interfaces.tileentity.IMachineProgress;
 import gregtech.api.util.GTUtility;
 import gregtech.common.gui.mui1.cover.ArmUIFactory;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Map;
 
 public class CoverArm extends CoverLegacyData {
 
@@ -44,10 +51,10 @@ public class CoverArm extends CoverLegacyData {
             return;
         }
 
-        final TileEntity toTile;
         final TileEntity fromTile;
-        final int toSlot;
+        final TileEntity toTile;
         final int fromSlot;
+        final int toSlot;
 
         if ((this.coverData & EXPORT_MASK) > 0) {
             fromTile = tileEntity;
@@ -61,8 +68,17 @@ public class CoverArm extends CoverLegacyData {
             toSlot = this.coverData & SLOT_ID_MASK;
         }
 
+        performItemTransfer(fromTile, toTile, fromSlot, toSlot);
+    }
+
+    private void performItemTransfer(TileEntity fromTile, TileEntity toTile, int fromSlot, int toSlot) {
+        final boolean isExport = (this.coverData & EXPORT_MASK) > 0;
+        final ForgeDirection coverDirection = coverSide;
+        final ForgeDirection toSide = isExport ? coverDirection : coverDirection.getOpposite();
+        final ForgeDirection fromSide = isExport ? coverDirection : coverDirection.getOpposite();
+
         if (fromSlot > 0 && toSlot > 0) {
-            if (fromTile instanceof IInventory fromInventory && toTile instanceof IInventory toInventory)
+            if (fromTile instanceof IInventory fromInventory && toTile instanceof IInventory toInventory) {
                 GTUtility.moveFromSlotToSlot(
                     fromInventory,
                     toInventory,
@@ -74,10 +90,8 @@ public class CoverArm extends CoverLegacyData {
                     (byte) 1,
                     (byte) 64,
                     (byte) 1);
+            }
         } else if (toSlot > 0) {
-            final ForgeDirection toSide;
-            if ((this.coverData & EXPORT_MASK) > 0) toSide = coverSide;
-            else toSide = coverSide.getOpposite();
             GTUtility.moveOneItemStackIntoSlot(
                 fromTile,
                 toTile,
@@ -90,30 +104,20 @@ public class CoverArm extends CoverLegacyData {
                 (byte) 64,
                 (byte) 1);
         } else if (fromSlot > 0) {
-            final ForgeDirection toSide;
-            if ((this.coverData & EXPORT_MASK) > 0) toSide = coverSide;
-            else toSide = coverSide.getOpposite();
-            if (fromTile instanceof IInventory fromInventory) GTUtility.moveFromSlotToSide(
-                fromInventory,
-                toTile,
-                fromSlot - 1,
-                toSide,
-                null,
-                false,
-                (byte) 64,
-                (byte) 1,
-                (byte) 64,
-                (byte) 1);
-        } else {
-            final ForgeDirection fromSide;
-            final ForgeDirection toSide;
-            if ((this.coverData & EXPORT_MASK) > 0) {
-                fromSide = coverSide;
-                toSide = coverSide.getOpposite();
-            } else {
-                fromSide = coverSide.getOpposite();
-                toSide = coverSide;
+            if (fromTile instanceof IInventory fromInventory) {
+                GTUtility.moveFromSlotToSide(
+                    fromInventory,
+                    toTile,
+                    fromSlot - 1,
+                    toSide,
+                    null,
+                    false,
+                    (byte) 64,
+                    (byte) 1,
+                    (byte) 64,
+                    (byte) 1);
             }
+        } else {
             GTUtility.moveOneItemStack(
                 fromTile,
                 toTile,
@@ -127,6 +131,29 @@ public class CoverArm extends CoverLegacyData {
                 (byte) 1);
         }
     }
+
+    private void doExactItemTransfer() {
+
+
+
+    }
+
+
+    protected int countInventoryItemsByMatchSlot(IInventory fromInventory, ItemStack filteredItem) {
+        int count = 0;
+        for(int srcIter = 0; srcIter < fromInventory.getSizeInventory(); srcIter++) {
+            ItemStack itemStack = fromInventory.getStackInSlot(srcIter);
+            if (itemStack != null) {
+                if(filteredItem.isItemEqual(itemStack)) {
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
+
+
+
 
     @Override
     public void onCoverScrewdriverClick(EntityPlayer aPlayer, float aX, float aY, float aZ) {
